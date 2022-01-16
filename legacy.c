@@ -131,7 +131,10 @@ printf("detected device of class %u.%u\n", major, minor);
 				printf("Cardbus controller detected\n");
 				err = pci_write_config_dword(&pci, 0x44, 0x3e1);
 				err = pci_read_config_dword(&pci, 0x04, &reg);
-				err = pci_write_config_dword(&pci, 0x04, reg | 1);
+				reg |= 1;
+				err = pci_write_config_dword(&pci, 0x04, reg);
+/* http://oswiki.osask.jp/?PCIC */
+
 				legacy_index(0x00);
 				legacy_read_data(&data);
 				printf("ExCA 0x00  %02x\n", data);
