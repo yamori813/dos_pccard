@@ -42,6 +42,7 @@ int cdecl legacy_write_data(unsigned char val);
 int cdecl legacy_read_data(unsigned char *val);
 
 int cdecl legacy_read_mem(unsigned offset, unsigned char *val);
+int cdecl legacy_write_mem(unsigned offset, unsigned char val);
 
 unsigned g_last_pci_bus;
 /*****************************************************************************
@@ -129,11 +130,72 @@ printf("detected device of class %u.%u\n", major, minor);
 				unsigned long reg;
 				unsigned char data;
 				printf("Cardbus controller detected\n");
-				err = pci_write_config_dword(&pci, 0x44, 0x3e1);
+				for (i = 0; i < 32; ++i) {
+					legacy_read_mem(i+0x00, &data);
+					printf("%02x ", data);
+				}
+				printf("\n");
+				for (i = 0; i < 64; ++i) {
+					legacy_read_mem(i+0x1000, &data);
+					printf("%02x ", data);
+				}
+				printf("\n");
+//				err = pci_write_config_dword(&pci, 0x44, 0x3e1);
+				err = pci_write_config_dword(&pci, 0x10, 0xb0000);
+
 				err = pci_read_config_dword(&pci, 0x04, &reg);
-				reg |= 1;
+				reg |= 7;
 				err = pci_write_config_dword(&pci, 0x04, reg);
+				for (i = 0; i < 64; i += 2) {
+					legacy_read_mem(i+0x00, &data);
+					printf("%02x ", data);
+				}
+				printf("\n");
+				err = pci_read_config_dword(&pci, 0x8c, &reg);
+				printf("MFUNC %lx\n", reg);
+
 /* http://oswiki.osask.jp/?PCIC */
+#define EXCAOFFSET	0x800
+				legacy_read_mem(EXCAOFFSET + 0x00, &data);
+				printf("ExCA 0x00  %02x\n", data);
+
+				legacy_write_mem(EXCAOFFSET + 0x06, 0x20);
+				legacy_write_mem(EXCAOFFSET + 0x03, 0x40);
+
+				legacy_read_mem(EXCAOFFSET + 0x01, &data);
+				printf("ExCA 0x01  %02x\n", data);
+				if ((data & 0x0c) == 0x0c) {
+					printf("Card inserted\n");
+					printf("Power On\n");
+					legacy_write_mem(EXCAOFFSET + 0x02, 0x10 | 0x80);
+					sleep(1);
+					legacy_read_mem(EXCAOFFSET + 0x01, &data);
+					printf("ExCA 0x01  %02x\n", data);
+					printf("Reset Card\n");
+					legacy_write_mem(EXCAOFFSET + 0x03, 0x00);
+					sleep(1);
+					legacy_write_mem(EXCAOFFSET + 0x03, 0x40);
+					sleep(1);
+
+					legacy_write_mem(EXCAOFFSET + 0x10, 0xb1);
+					legacy_write_mem(EXCAOFFSET + 0x11, 0xc0);
+					legacy_write_mem(EXCAOFFSET + 0x12, 0xb1);
+					legacy_write_mem(EXCAOFFSET + 0x13, 0x00);
+					legacy_write_mem(EXCAOFFSET + 0x14, 0x4f);
+					legacy_write_mem(EXCAOFFSET + 0x15, 0x7f);
+					legacy_write_mem(EXCAOFFSET + 0x40, 0x00);
+					legacy_write_mem(EXCAOFFSET + 0x06, 0x01);
+
+					sleep(2);
+					for (i = 0; i < 64; ++i) {
+						legacy_read_mem(i+0x1000, &data);
+						printf("%02x ", data);
+					}
+					sleep(1);
+					printf("\nPower Off\n");
+					legacy_write_mem(EXCAOFFSET + 0x02, 0x00);
+				}
+#if 0
 
 				legacy_index(0x00);
 				legacy_read_data(&data);
@@ -193,6 +255,7 @@ printf("detected device of class %u.%u\n", major, minor);
 					legacy_read_data(&data);
 					printf("ExCA 0x01  %02x\n", data);
 				}
+#endif
 			}
 		}
 	} while(!pci_iterate(&pci));

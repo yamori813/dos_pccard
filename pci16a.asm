@@ -369,12 +369,34 @@ EXP legacy_read_mem
 		push bx
 			mov di,[bp + 4] ; reg
 			push ds
-			mov ax, 0d000h
+			mov ax, 0b000h
 			mov ds, ax
 			mov cl, [di]
 			pop ds
 			mov bx, [bp + 6] ; val
 			mov [bx], cl	; *val
+		pop bx
+		pop cx
+		pop di
+
+		mov al,ah
+		xor ah,ah
+	pop bp
+	ret
+
+EXP legacy_write_mem
+	push bp
+	mov bp,sp
+		push di
+		push cx
+		push bx
+			mov di,[bp + 4] ; reg
+			mov cl, [bp + 6] ; val
+			push ds
+			mov ax, 0b000h
+			mov ds, ax
+			mov [di], cl
+			pop ds
 		pop bx
 		pop cx
 		pop di

@@ -1,5 +1,7 @@
 WATCOM=../watcom
 
+all:	legacy.exe
+
 legacy.exe:	legacy.o pci16a.obj
 	wlink OP q D w a SYS dos N legacy.exe F legacy.o F pci16a.obj
 
