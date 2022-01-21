@@ -82,8 +82,9 @@ fn (function) is the least significant, bus is the most significant */
 
 static void read_cis()
 {
-	int i;
+	int i, pos;
 	unsigned char data;
+	unsigned char type, len;
 
 	printf("Power On\n");
 	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
@@ -107,9 +108,27 @@ static void read_cis()
 	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
 
 	sleep(1);
-	for (i = 0; i < 64; i += 2) {
-		cb_read_mem(i+0x1000, &data);
-		printf("%02x ", data);
+	pos = 0;
+	while (1) {
+		cb_read_mem(pos+0x1000, &type);
+		printf("%02x ", type);
+		pos += 2;
+		if (type == 0xff)
+			break;
+		cb_read_mem(pos+0x1000, &len);
+		printf("%02x ", len);
+		pos += 2;
+		/* check this block data length and next type,len over 4k */
+		if ((len + 2) * 2 + pos > 0x1000) {
+			printf("CIS is over 4K\n");
+			break;
+		}
+		for (i = 0; i < len; ++i) {
+			cb_read_mem(pos+0x1000, &data);
+			printf("%02x ", data);
+			pos += 2;
+		}
+		printf("\n");
 	}
 	sleep(1);
 	printf("\nPower Off\n");
