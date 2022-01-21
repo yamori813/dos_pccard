@@ -10,6 +10,8 @@ You can do whatever you want with it.
 #include <stdio.h>
 #include <dos.h>
 
+#include "i82365reg.h"
+
 #if defined(__TURBOC__)
 /* nothing */
 
@@ -140,8 +142,6 @@ printf("detected device of class %u.%u\n", major, minor);
 					printf("%02x ", data);
 				}
 				printf("\n");
-				err = pci_read_config_dword(&pci, 0x8c, &reg);
-				printf("MFUNC %lx\n", reg);
 
 /* http://oswiki.osask.jp/?PCIC */
 #define EXCAOFFSET	0x800
