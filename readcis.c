@@ -84,7 +84,7 @@ static void read_cis()
 {
 	int i, pos;
 	unsigned char data;
-	unsigned char type, len;
+	unsigned char code, len;
 
 	printf("Power On\n");
 	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
@@ -113,15 +113,15 @@ static void read_cis()
 	sleep(1);
 	pos = 0;
 	while (1) {
-		cb_read_mem(pos+0x1000, &type);
-		printf("%02x ", type);
+		cb_read_mem(pos+0x1000, &code);
+		printf("%02x ", code);
 		pos += 2;
-		if (type == 0xff)
+		if (code == 0xff)
 			break;
 		cb_read_mem(pos+0x1000, &len);
 		printf("%02x ", len);
 		pos += 2;
-		/* check this block data length and next type,len over 4k */
+		/* check this block data length and next code,len over 4k */
 		if ((len + 2) * 2 + pos > 0x1000) {
 			printf("CIS is over 4K\n");
 			break;
