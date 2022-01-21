@@ -156,7 +156,7 @@ printf("detected device of class %u.%u\n", major, minor);
 				if ((data & 0x0c) == 0x0c) {
 					printf("Card inserted\n");
 					printf("Power On\n");
-					legacy_write_mem(EXCAOFFSET + 0x02, 0x10 | 0x80);
+					legacy_write_mem(EXCAOFFSET + PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 					sleep(1);
 					legacy_read_mem(EXCAOFFSET + 0x01, &data);
 					printf("ExCA 0x01  %02x\n", data);
@@ -173,7 +173,7 @@ printf("detected device of class %u.%u\n", major, minor);
 					legacy_write_mem(EXCAOFFSET + 0x14, 0x4f);
 					legacy_write_mem(EXCAOFFSET + 0x15, 0x7f);
 					legacy_write_mem(EXCAOFFSET + 0x40, 0x00);
-					legacy_write_mem(EXCAOFFSET + 0x06, 0x01);
+					legacy_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
 
 					sleep(2);
 					for (i = 0; i < 64; i += 2) {
@@ -182,69 +182,8 @@ printf("detected device of class %u.%u\n", major, minor);
 					}
 					sleep(1);
 					printf("\nPower Off\n");
-					legacy_write_mem(EXCAOFFSET + 0x02, 0x00);
+					legacy_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
 				}
-#if 0
-
-				legacy_index(0x00);
-				legacy_read_data(&data);
-				printf("ExCA 0x00  %02x\n", data);
-				legacy_index(0x06);
-				legacy_write_data(0x20);
-				legacy_index(0x04);
-				legacy_write_data(0x40);
-				legacy_index(0x01);
-				legacy_read_data(&data);
-				printf("ExCA 0x01  %02x\n", data);
-				if ((data & 0x0c) == 0x0c) {
-					printf("Card inserted\n");
-					printf("Power On\n");
-					legacy_index(0x02);
-					legacy_write_data(0x10);
-					sleep(1);
-					legacy_index(0x01);
-					legacy_read_data(&data);
-					printf("ExCA 0x01  %02x\n", data);
-					printf("Reset Card\n");
-					legacy_index(0x03);
-					legacy_write_data(0x00);
-					sleep(1);
-					legacy_index(0x03);
-					legacy_write_data(0x40);
-					sleep(1);
-
-					/* 0xd0000～0xd0fff */
-					legacy_index(0x10);
-					legacy_write_data(0xd0);
-					legacy_index(0x11);
-					legacy_write_data(0xc0);
-					legacy_index(0x12);
-					legacy_write_data(0xd0);
-					legacy_index(0x13);
-					legacy_write_data(0x00);
-					legacy_index(0x14);
-					legacy_write_data(0x30);
-					legacy_index(0x15);
-					legacy_write_data(0x7f);
-
-					printf("Enable Memory\n");
-					legacy_index(0x06);
-					legacy_write_data(0x21);
-
-					for (i = 0; i < 64; ++i) {
-						legacy_read_mem(i, &data);
-						printf("%02x ", data);
-					}
-
-					printf("\nPower Off\n");
-					legacy_index(0x02);
-					legacy_write_data(0x00);
-					sleep(1);
-					legacy_index(0x01);
-					legacy_read_data(&data);
-					printf("ExCA 0x01  %02x\n", data);
-				}
-#endif
 			}
 		}
 	} while(!pci_iterate(&pci));
