@@ -24,6 +24,8 @@ You can do whatever you want with it.
 #error Unsupported compiler
 #endif
 
+#define EXCAOFFSET	0x800
+
 typedef struct
 {
 	unsigned char bus, dev, fn;
@@ -76,6 +78,42 @@ fn (function) is the least significant, bus is the most significant */
 		}
 	}
 	return 0;
+}
+
+read_cis()
+{
+	int i;
+	unsigned char data;
+
+	printf("Power On\n");
+	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
+	    PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
+	sleep(1);
+	cb_read_mem(EXCAOFFSET + 0x01, &data);
+	printf("ExCA 0x01  %02x\n", data);
+	printf("Reset Card\n");
+	cb_write_mem(EXCAOFFSET + 0x03, 0x00);
+	sleep(1);
+	cb_write_mem(EXCAOFFSET + 0x03, 0x40);
+	sleep(1);
+
+	cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
+	cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
+	cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
+	cb_write_mem(EXCAOFFSET + 0x13, 0x00);
+	cb_write_mem(EXCAOFFSET + 0x14, 0x4f);
+	cb_write_mem(EXCAOFFSET + 0x15, 0x7f);
+	cb_write_mem(EXCAOFFSET + 0x40, 0x00);
+	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
+
+	sleep(1);
+	for (i = 0; i < 64; i += 2) {
+		cb_read_mem(i+0x1000, &data);
+		printf("%02x ", data);
+	}
+	sleep(1);
+	printf("\nPower Off\n");
+	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
 }
 /*****************************************************************************
 *****************************************************************************/
@@ -143,7 +181,6 @@ printf("detected device of class %u.%u\n", major, minor);
 				printf("\n");
 
 /* http://oswiki.osask.jp/?PCIC */
-#define EXCAOFFSET	0x800
 				cb_read_mem(EXCAOFFSET + 0x00, &data);
 				printf("ExCA 0x00  %02x\n", data);
 
@@ -154,34 +191,7 @@ printf("detected device of class %u.%u\n", major, minor);
 				printf("ExCA 0x01  %02x\n", data);
 				if ((data & 0x0c) == 0x0c) {
 					printf("Card inserted\n");
-					printf("Power On\n");
-					cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
-					sleep(1);
-					cb_read_mem(EXCAOFFSET + 0x01, &data);
-					printf("ExCA 0x01  %02x\n", data);
-					printf("Reset Card\n");
-					cb_write_mem(EXCAOFFSET + 0x03, 0x00);
-					sleep(1);
-					cb_write_mem(EXCAOFFSET + 0x03, 0x40);
-					sleep(1);
-
-					cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
-					cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
-					cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
-					cb_write_mem(EXCAOFFSET + 0x13, 0x00);
-					cb_write_mem(EXCAOFFSET + 0x14, 0x4f);
-					cb_write_mem(EXCAOFFSET + 0x15, 0x7f);
-					cb_write_mem(EXCAOFFSET + 0x40, 0x00);
-					cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
-
-					sleep(1);
-					for (i = 0; i < 64; i += 2) {
-						cb_read_mem(i+0x1000, &data);
-						printf("%02x ", data);
-					}
-					sleep(1);
-					printf("\nPower Off\n");
-					cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
+					read_cis();
 				}
 			}
 		}
