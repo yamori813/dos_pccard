@@ -98,6 +98,9 @@ static void read_cis()
 	cb_write_mem(EXCAOFFSET + 0x03, 0x40);
 	sleep(1);
 
+	/*
+	   set memory windows to 0xb1000 - 0xb1fff (4Kbyte)
+	*/
 	cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
 	cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
 	cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
@@ -188,7 +191,12 @@ printf("detected device of class %u.%u\n", major, minor);
 				int i;
 				unsigned long reg;
 				unsigned char data;
-				err = pci_write_config_dword(&pci, 0x10, 0xb0000);
+				/*
+				   set CardBus Socket/ExCA Base Address
+				   0xb0000 - 0xb0fff (4Kbyte)
+				*/
+				err = pci_write_config_dword(&pci, 0x10,
+				    0xb0000);
 
 				err = pci_read_config_dword(&pci, 0x04, &reg);
 				reg |= 7;
@@ -200,15 +208,16 @@ printf("detected device of class %u.%u\n", major, minor);
 				printf("\n");
 
 /* http://oswiki.osask.jp/?PCIC */
-				cb_read_mem(EXCAOFFSET + 0x00, &data);
-				printf("ExCA 0x00  %02x\n", data);
+				cb_read_mem(EXCAOFFSET + PCIC_IDENT, &data);
+				printf("ExCA PCIC_IDENT %02x\n", data);
 
 				cb_write_mem(EXCAOFFSET + 0x06, 0x20);
 				cb_write_mem(EXCAOFFSET + 0x03, 0x40);
 
-				cb_read_mem(EXCAOFFSET + 0x01, &data);
-				printf("ExCA 0x01  %02x\n", data);
-				if ((data & 0x0c) == 0x0c) {
+				cb_read_mem(EXCAOFFSET + PCIC_IF_STATUS, &data);
+				printf("ExCA PCIC_IF_STATUS %02x\n", data);
+				if ((data & PCIC_IF_STATUS_CARDDETECT_MASK) ==
+				     PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 					printf("Card inserted\n");
 					read_cis();
 				}
