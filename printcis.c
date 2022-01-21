@@ -746,6 +746,7 @@ dump_device_desc(u_char *p, int len, char *type)
 		p++;
 	}
 }
+#endif
 
 /*
  *	CIS_INFO_V1: Print version-1 info
@@ -781,6 +782,7 @@ dump_info_v1(u_char *p, int len)
 	}
 }
 
+#if 0
 /*
  *	CIS_FUNC_ID: Functional ID
  */
@@ -1174,6 +1176,9 @@ void read_cis()
 		}
 		printf("\n");
 		tp.data = buf;
+		if (tp.code == CIS_INFO_V1)
+			dump_info_v1(tp.data, tp.length);
+
 		if (tp.code == CIS_CONF_MAP)
 			dump_config_map(&tp);
 
