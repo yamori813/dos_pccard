@@ -80,7 +80,7 @@ fn (function) is the least significant, bus is the most significant */
 	return 0;
 }
 
-read_cis()
+static void read_cis()
 {
 	int i;
 	unsigned char data;
