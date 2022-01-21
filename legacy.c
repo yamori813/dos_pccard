@@ -129,17 +129,6 @@ printf("detected device of class %u.%u\n", major, minor);
 				int i;
 				unsigned long reg;
 				unsigned char data;
-				printf("Cardbus controller detected\n");
-				for (i = 0; i < 32; ++i) {
-					legacy_read_mem(i+0x00, &data);
-					printf("%02x ", data);
-				}
-				printf("\n");
-				for (i = 0; i < 64; ++i) {
-					legacy_read_mem(i+0x1000, &data);
-					printf("%02x ", data);
-				}
-				printf("\n");
 //				err = pci_write_config_dword(&pci, 0x44, 0x3e1);
 				err = pci_write_config_dword(&pci, 0x10, 0xb0000);
 
@@ -187,7 +176,7 @@ printf("detected device of class %u.%u\n", major, minor);
 					legacy_write_mem(EXCAOFFSET + 0x06, 0x01);
 
 					sleep(2);
-					for (i = 0; i < 64; ++i) {
+					for (i = 0; i < 64; i += 2) {
 						legacy_read_mem(i+0x1000, &data);
 						printf("%02x ", data);
 					}
