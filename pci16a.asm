@@ -361,7 +361,7 @@ EXP legacy_read_data
 	pop bp
 	ret
 
-EXP legacy_read_mem
+EXP cb_read_mem
 	push bp
 	mov bp,sp
 		push di
@@ -384,7 +384,7 @@ EXP legacy_read_mem
 	pop bp
 	ret
 
-EXP legacy_write_mem
+EXP cb_write_mem
 	push bp
 	mov bp,sp
 		push di

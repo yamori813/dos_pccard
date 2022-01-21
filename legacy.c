@@ -43,8 +43,8 @@ int cdecl legacy_index(unsigned char val);
 int cdecl legacy_write_data(unsigned char val);
 int cdecl legacy_read_data(unsigned char *val);
 
-int cdecl legacy_read_mem(unsigned offset, unsigned char *val);
-int cdecl legacy_write_mem(unsigned offset, unsigned char val);
+int cdecl cb_read_mem(unsigned offset, unsigned char *val);
+int cdecl cb_write_mem(unsigned offset, unsigned char val);
 
 unsigned g_last_pci_bus;
 /*****************************************************************************
@@ -131,58 +131,57 @@ printf("detected device of class %u.%u\n", major, minor);
 				int i;
 				unsigned long reg;
 				unsigned char data;
-//				err = pci_write_config_dword(&pci, 0x44, 0x3e1);
 				err = pci_write_config_dword(&pci, 0x10, 0xb0000);
 
 				err = pci_read_config_dword(&pci, 0x04, &reg);
 				reg |= 7;
 				err = pci_write_config_dword(&pci, 0x04, reg);
 				for (i = 0; i < 64; i += 2) {
-					legacy_read_mem(i+0x00, &data);
+					cb_read_mem(i+0x00, &data);
 					printf("%02x ", data);
 				}
 				printf("\n");
 
 /* http://oswiki.osask.jp/?PCIC */
 #define EXCAOFFSET	0x800
-				legacy_read_mem(EXCAOFFSET + 0x00, &data);
+				cb_read_mem(EXCAOFFSET + 0x00, &data);
 				printf("ExCA 0x00  %02x\n", data);
 
-				legacy_write_mem(EXCAOFFSET + 0x06, 0x20);
-				legacy_write_mem(EXCAOFFSET + 0x03, 0x40);
+				cb_write_mem(EXCAOFFSET + 0x06, 0x20);
+				cb_write_mem(EXCAOFFSET + 0x03, 0x40);
 
-				legacy_read_mem(EXCAOFFSET + 0x01, &data);
+				cb_read_mem(EXCAOFFSET + 0x01, &data);
 				printf("ExCA 0x01  %02x\n", data);
 				if ((data & 0x0c) == 0x0c) {
 					printf("Card inserted\n");
 					printf("Power On\n");
-					legacy_write_mem(EXCAOFFSET + PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
+					cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 					sleep(1);
-					legacy_read_mem(EXCAOFFSET + 0x01, &data);
+					cb_read_mem(EXCAOFFSET + 0x01, &data);
 					printf("ExCA 0x01  %02x\n", data);
 					printf("Reset Card\n");
-					legacy_write_mem(EXCAOFFSET + 0x03, 0x00);
+					cb_write_mem(EXCAOFFSET + 0x03, 0x00);
 					sleep(1);
-					legacy_write_mem(EXCAOFFSET + 0x03, 0x40);
+					cb_write_mem(EXCAOFFSET + 0x03, 0x40);
 					sleep(1);
 
-					legacy_write_mem(EXCAOFFSET + 0x10, 0xb1);
-					legacy_write_mem(EXCAOFFSET + 0x11, 0xc0);
-					legacy_write_mem(EXCAOFFSET + 0x12, 0xb1);
-					legacy_write_mem(EXCAOFFSET + 0x13, 0x00);
-					legacy_write_mem(EXCAOFFSET + 0x14, 0x4f);
-					legacy_write_mem(EXCAOFFSET + 0x15, 0x7f);
-					legacy_write_mem(EXCAOFFSET + 0x40, 0x00);
-					legacy_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
+					cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
+					cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
+					cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
+					cb_write_mem(EXCAOFFSET + 0x13, 0x00);
+					cb_write_mem(EXCAOFFSET + 0x14, 0x4f);
+					cb_write_mem(EXCAOFFSET + 0x15, 0x7f);
+					cb_write_mem(EXCAOFFSET + 0x40, 0x00);
+					cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
 
-					sleep(2);
+					sleep(1);
 					for (i = 0; i < 64; i += 2) {
-						legacy_read_mem(i+0x1000, &data);
+						cb_read_mem(i+0x1000, &data);
 						printf("%02x ", data);
 					}
 					sleep(1);
 					printf("\nPower Off\n");
-					legacy_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
+					cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
 				}
 			}
 		}
