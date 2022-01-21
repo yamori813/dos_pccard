@@ -12,6 +12,8 @@ You can do whatever you want with it.
 
 #include "i82365reg.h"
 
+#include "readcis.h"
+
 #if defined(__TURBOC__)
 /* nothing */
 
@@ -23,30 +25,6 @@ You can do whatever you want with it.
 #else
 #error Unsupported compiler
 #endif
-
-#define EXCAOFFSET	0x800
-
-typedef struct
-{
-	unsigned char bus, dev, fn;
-} pci_t;
-
-/* IMPORTS
-from PCI16A.ASM */
-int cdecl pci_detect(void);
-int cdecl pci_read_config_byte(pci_t *pci, unsigned reg, unsigned char *val);
-int cdecl pci_read_config_word(pci_t *pci, unsigned reg, unsigned short *val);
-int cdecl pci_read_config_dword(pci_t *pci, unsigned reg, unsigned long *val);
-int cdecl pci_write_config_byte(pci_t *pci, unsigned reg, unsigned char val);
-int cdecl pci_write_config_word(pci_t *pci, unsigned reg, unsigned short val);
-int cdecl pci_write_config_dword(pci_t *pci, unsigned reg, unsigned long val);
-
-int cdecl legacy_index(unsigned char val);
-int cdecl legacy_write_data(unsigned char val);
-int cdecl legacy_read_data(unsigned char *val);
-
-int cdecl cb_read_mem(unsigned offset, unsigned char *val);
-int cdecl cb_write_mem(unsigned offset, unsigned char val);
 
 unsigned g_last_pci_bus;
 /*****************************************************************************
@@ -80,63 +58,6 @@ fn (function) is the least significant, bus is the most significant */
 	return 0;
 }
 
-static void read_cis()
-{
-	int i, pos;
-	unsigned char data;
-	unsigned char code, len;
-
-	printf("Power On\n");
-	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
-	    PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
-	sleep(1);
-	cb_read_mem(EXCAOFFSET + 0x01, &data);
-	printf("ExCA 0x01  %02x\n", data);
-	printf("Reset Card\n");
-	cb_write_mem(EXCAOFFSET + 0x03, 0x00);
-	sleep(1);
-	cb_write_mem(EXCAOFFSET + 0x03, 0x40);
-	sleep(1);
-
-	/*
-	   set memory windows to 0xb1000 - 0xb1fff (4Kbyte)
-	*/
-	cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
-	cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
-	cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
-	cb_write_mem(EXCAOFFSET + 0x13, 0x00);
-	cb_write_mem(EXCAOFFSET + 0x14, 0x4f);
-	cb_write_mem(EXCAOFFSET + 0x15, 0x7f);
-	cb_write_mem(EXCAOFFSET + 0x40, 0x00);
-	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, 0x01);
-
-	sleep(1);
-	pos = 0;
-	while (1) {
-		cb_read_mem(pos+0x1000, &code);
-		printf("%02x ", code);
-		pos += 2;
-		if (code == 0xff)
-			break;
-		cb_read_mem(pos+0x1000, &len);
-		printf("%02x ", len);
-		pos += 2;
-		/* check this block data length and next code,len over 4k */
-		if ((len + 2) * 2 + pos > 0x1000) {
-			printf("CIS is over 4K\n");
-			break;
-		}
-		for (i = 0; i < len; ++i) {
-			cb_read_mem(pos+0x1000, &data);
-			printf("%02x ", data);
-			pos += 2;
-		}
-		printf("\n");
-	}
-	sleep(1);
-	printf("\nPower Off\n");
-	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL, 0x00);
-}
 /*****************************************************************************
 *****************************************************************************/
 int main(void)
