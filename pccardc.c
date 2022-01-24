@@ -93,6 +93,7 @@ void enable_pccard()
 
 	confaddr = 0x400;
 	confidx = 1;
+	ioaddr = 0x330;
 	for (i = 0; i < 8; ++i) {
 		cb_read_mem(MEMWINOFFSET + confaddr + i, &data);
 		printf("%02x ", data);
@@ -117,8 +118,6 @@ void enable_pccard()
 	    PCIC_PWRCTL_VPP1_VCC | PCIC_PWRCTL_VPP2_VCC | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 	cb_read_mem(EXCAOFFSET + 0x02, &data);
 	printf("ExCA 0x02  %02x\n", data);
-	ioaddr = 0x330;
-	ioaddr = 0x300;
 	/* start */
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_START_LSB, ioaddr & 0xff);
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_START_MSB, ioaddr >> 8);
@@ -219,6 +218,8 @@ printf("detected device of class %u.%u\n", major, minor);
 				*/
 				err = pci_write_config_dword(&pci, 0x10,
 				    0xb0000);
+				err = pci_write_config_dword(&pci, 0x44,
+				    0);
 
 				err = pci_read_config_dword(&pci, 0x04, &reg);
 				reg |= 7;
