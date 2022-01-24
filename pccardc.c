@@ -232,7 +232,6 @@ printf("detected device of class %u.%u\n", major, minor);
 
 				/* Socket Present State Register 0-7bit */
 				cb_read_mem(0x08, &data);
-				printf("08 %02x\n", data);
 
 				if (data & 0x10) {
 					printf("16-bit card detected.\n");
