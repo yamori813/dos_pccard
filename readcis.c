@@ -43,17 +43,18 @@ __FBSDID("$FreeBSD$");
 #include <unistd.h>
 
 #include "cardinfo.h"
-#include "cis.h"
 #endif
+#include "cis.h"
 #include "readcis.h"
-#if 0
 
+#if 0
 static int ck_linktarget(int, off_t, int);
 static struct tuple_list *read_one_tuplelist(int, int, off_t);
 static struct tuple_list *read_tuples(int);
 static struct tuple *find_tuple_in_list(struct tuple_list *, unsigned char);
 static struct tuple_info *get_tuple_info(unsigned char);
 
+#endif
 #define LENGTH_ANY 255
 
 static struct tuple_info tuple_info[] = {
@@ -96,6 +97,7 @@ static struct tuple_info tuple_info[] = {
 	{0, 0, 0}
 };
 
+#if 0
 static void *
 xmalloc(int sz)
 {
@@ -373,6 +375,7 @@ find_tuple_in_list(struct tuple_list *tl, unsigned char code)
 			break;
 	return (tp);
 }
+#endif
 
 /*
  *	return table entry for code.
@@ -398,4 +401,3 @@ tuple_name(unsigned char code)
 		return (tp->name);
 	return ("Unknown");
 }
-#endif

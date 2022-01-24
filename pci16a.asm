@@ -306,51 +306,33 @@ EXP pci_write_config_dword
 	pop bp
 	ret
 
-EXP legacy_index
+EXP io_write_data
 	push bp
 	mov bp,sp
 		push di
 		push cx
 		push bx
-			mov al,[bp + 4] ; val
-			mov dx,3e0h
-			out dx,al
-		pop bx
-		pop cx
-		pop di
-
-		mov al,ah
-		xor ah,ah
-	pop bp
-	ret
-
-EXP legacy_write_data
-	push bp
-	mov bp,sp
-		push di
-		push cx
-		push bx
-			mov al,[bp + 4] ; val
-			mov dx,3e1h
-			out dx,al
-		pop bx
-		pop cx
-		pop di
-
-		mov al,ah
-		xor ah,ah
-	pop bp
-	ret
-
-EXP legacy_read_data 
-	push bp
-	mov bp,sp
-		push di
-		push cx
-		push bx
-			mov bx,[bp + 4] ; val
-			mov dx,3e1h
+			mov dx,[bp + 4] ; addr
+			mov al,[bp + 6] ; val
 			in  al, dx
+		pop bx
+		pop cx
+		pop di
+
+		mov al,ah
+		xor ah,ah
+	pop bp
+	ret
+
+EXP io_read_data
+	push bp
+	mov bp,sp
+		push di
+		push cx
+		push bx
+			mov dx,[bp + 4] ; addr
+			in  al, dx
+			mov bx,[bp + 6] ; val
 			mov [bx + 0], al ; *val
 		pop bx
 		pop cx

@@ -52,7 +52,6 @@
 #include "cis.h"
 #include "readcis.h"
 
-#if 0
 static void   dump_config_map(struct tuple *tp);
 static void   dump_cis_config(struct tuple *tp);
 static void   dump_other_cond(u_char *p, int len);
@@ -68,6 +67,7 @@ static void   dump_network_ext(u_char *p, int len);
 static void   dump_info_v2(u_char *p, int len);
 static void   dump_org(u_char *p, int len);
 
+#if 0
 void
 dumpcis(struct cis *cp)
 {
@@ -201,7 +201,7 @@ dump_config_map(struct tuple *tp)
 		printf("\tWrong length for configuration map tuple\n");
 		return;
 	}
-	printf("\tReg len = %d, config register addr = 0x%x, last config = 0x%x\n",
+	printf("\tReg len = %d, config register addr = 0x%lx, last config = 0x%x\n",
 	       rlen, parse_num(rlen | 0x10, p + 2, &p, 0), p[1]);
 	if (mlen) {
 		printf("\tRegisters: ");
@@ -679,7 +679,6 @@ dump_cis_config(struct tuple *tp)
 	}
 }
 
-#if 0
 /*
  *	CIS_DEVICE_OC, CIS_DEVICE_OA:
  *		Dump other conditions for common/attribute memory
@@ -746,7 +745,6 @@ dump_device_desc(u_char *p, int len, char *type)
 		p++;
 	}
 }
-#endif
 
 /*
  *	CIS_INFO_V1: Print version-1 info
@@ -782,7 +780,6 @@ dump_info_v1(u_char *p, int len)
 	}
 }
 
-#if 0
 /*
  *	CIS_FUNC_ID: Functional ID
  */
@@ -1116,7 +1113,6 @@ dump_bar(u_char *p, int len)
 	       (*p & 0x40) ? ", Cacheable" : "",
 	       (*p & 0x80) ? ", <1Mb" : "");
 }
-#endif
 
 void read_cis()
 {
@@ -1125,6 +1121,9 @@ void read_cis()
 	unsigned char code, len;
 	struct tuple tp;
 	unsigned char buf[256];
+	unsigned char *p;
+	int count, sz, ad;
+	int func = 0;
 
 	printf("Power On\n");
 	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
@@ -1152,15 +1151,14 @@ void read_cis()
 
 	sleep(1);
 	pos = 0;
+	count = 0;
 	while (1) {
 		cb_read_mem(pos+0x1000, &code);
-		printf("%02x ", code);
 		pos += 2;
 		if (code == 0xff)
 			break;
 		tp.code = code;
 		cb_read_mem(pos+0x1000, &len);
-		printf("%02x ", len);
 		pos += 2;
 		tp.length = len;
 		/* check this block data length and next code,len over 4k */
@@ -1168,23 +1166,112 @@ void read_cis()
 			printf("CIS is over 4K\n");
 			break;
 		}
+		printf("Tuple #%d, code = 0x%x (%s), length = %d\n",
+		    ++count, tp.code, tuple_name(tp.code), tp.length);
 		for (i = 0; i < len; ++i) {
 			cb_read_mem(pos+0x1000, &data);
 			buf[i] = data;
-			printf("%02x ", data);
 			pos += 2;
 		}
-		printf("\n");
 		tp.data = buf;
-		if (tp.code == CIS_INFO_V1)
-			dump_info_v1(tp.data, tp.length);
-
-		if (tp.code == CIS_CONF_MAP)
+		p = tp.data;
+		sz = tp.length;
+		ad = 0;
+		while (sz > 0) {
+			printf("    %03x: ", ad);
+			for (i = 0; i < ((sz < 16) ? sz : 16); i++)
+				printf(" %02x", p[i]);
+			printf("\n");
+			sz -= 16;
+			p += 16;
+			ad += 16;
+		}
+		switch (tp.code) {
+		default:
+			break;
+		case CIS_MEM_COMMON:	/* 0x01 */
+			dump_device_desc(tp.data, tp.length, "Common");
+			break;
+		case CIS_CONF_MAP_CB:	/* 0x04 */
 			dump_config_map(&tp);
-
-		if (tp.code == CIS_CONFIG)
+			break;
+		case CIS_CONFIG_CB:	/* 0x05 */
 			dump_cis_config(&tp);
-
+			break;
+		case CIS_LONGLINK_MFC:	/* 0x06 */
+			dump_longlink_mfc(tp.data, tp.length);
+			break;
+		case CIS_BAR:		/* 0x07 */
+			dump_bar(tp.data, tp.length);
+			break;
+		case CIS_CHECKSUM:	/* 0x10 */
+			printf("\tChecksum from offset %d, length %d, value is 0x%x\n",
+			       tpl16(tp.data),
+			       tpl16(tp.data + 2),
+			       tp.data[4]);
+			break;
+		case CIS_LONGLINK_A:	/* 0x11 */
+			printf("\tLong link to attribute memory, address 0x%x\n",
+			       tpl32(tp.data));
+			break;
+		case CIS_LONGLINK_C:	/* 0x12 */
+			printf("\tLong link to common memory, address 0x%x\n",
+			       tpl32(tp.data));
+			break;
+		case CIS_INFO_V1:	/* 0x15 */
+			dump_info_v1(tp.data, tp.length);
+			break;
+		case CIS_ALTSTR:	/* 0x16 */
+			break;
+		case CIS_MEM_ATTR:	/* 0x17 */
+			dump_device_desc(tp.data, tp.length, "Attribute");
+			break;
+		case CIS_JEDEC_C:	/* 0x18 */
+		case CIS_JEDEC_A:	/* 0x19 */
+			break;
+		case CIS_CONF_MAP:	/* 0x1A */
+			dump_config_map(&tp);
+			break;
+		case CIS_CONFIG:	/* 0x1B */
+			dump_cis_config(&tp);
+			break;
+		case CIS_DEVICE_OC:	/* 0x1C */
+		case CIS_DEVICE_OA:	/* 0x1D */
+			dump_other_cond(tp.data, tp.length);
+			break;
+		case CIS_DEVICEGEO:	/* 0x1E */
+		case CIS_DEVICEGEO_A:	/* 0x1F */
+			dump_device_geo(tp.data, tp.length);
+			break;
+		case CIS_MANUF_ID:	/* 0x20 */
+			printf("\tPCMCIA ID = 0x%x, OEM ID = 0x%x\n",
+			       tpl16(tp.data),
+			       tpl16(tp.data + 2));
+			break;
+		case CIS_FUNC_ID:	/* 0x21 */
+			func = tp.data[0];
+			dump_func_id(tp.data);
+			break;
+		case CIS_FUNC_EXT:	/* 0x22 */
+			switch (func) {
+			case 2:
+				dump_serial_ext(tp.data, tp.length);
+				break;
+			case 4:
+				dump_disk_ext(tp.data, tp.length);
+				break;
+			case 6:
+				dump_network_ext(tp.data, tp.length);
+				break;
+			}
+			break;
+		case CIS_VERS_2:	/* 0x40 */
+			dump_info_v2(tp.data, tp.length);
+			break;
+		case CIS_ORG:		/* 0x46 */
+			dump_org(tp.data, tp.length);
+			break;
+		}
 	}
 	sleep(1);
 	printf("\nPower Off\n");

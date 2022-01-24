@@ -29,6 +29,7 @@
 
 typedef unsigned char u_char;
 typedef unsigned long u_int;
+typedef unsigned off_t;
 
 struct tuple {
 //	struct tuple *next;
@@ -37,7 +38,6 @@ struct tuple {
 	unsigned char *data;
 };
 
-#if 0
 struct tuple_list {
 	struct tuple_list *next;
 	struct tuple *tuples;
@@ -51,6 +51,7 @@ struct tuple_info {
 	unsigned char length;		/* 255 means variable length */
 };
 
+#if 0
 /*
  *	Memory device descriptor.
  */
@@ -149,7 +150,8 @@ char   *tuple_name(unsigned char);
 #endif
 u_int   parse_num(int, u_char *, u_char **, int);
 
-#define EXCAOFFSET      0x800
+#define EXCAOFFSET	0x800
+#define MEMWINOFFSET	0x1000
 
 typedef struct
 {
@@ -166,9 +168,8 @@ int cdecl pci_write_config_byte(pci_t *pci, unsigned reg, unsigned char val);
 int cdecl pci_write_config_word(pci_t *pci, unsigned reg, unsigned short val);
 int cdecl pci_write_config_dword(pci_t *pci, unsigned reg, unsigned long val);
 
-int cdecl legacy_index(unsigned char val);
-int cdecl legacy_write_data(unsigned char val);
-int cdecl legacy_read_data(unsigned char *val);
+int cdecl io_write_data(unsigned addr, unsigned char val);
+int cdecl io_read_data(unsigned addr, unsigned char *val);
 
 int cdecl cb_read_mem(unsigned offset, unsigned char *val);
 int cdecl cb_write_mem(unsigned offset, unsigned char val);
