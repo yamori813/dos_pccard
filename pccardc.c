@@ -246,7 +246,7 @@ printf("detected device of class %u.%u\n", major, minor);
 					printf("ExCA PCIC_IF_STATUS %02x\n", data);
 					if ((data & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 					     PCIC_IF_STATUS_CARDDETECT_PRESENT) {
-						printf("Card inserted\n");
+						printf("ExCA Card inserted\n");
 						if (dump)
 							read_cis();
 						else
