@@ -230,6 +230,7 @@ printf("detected device of class %u.%u\n", major, minor);
 				}
 				printf("\n");
 
+				/* Socket Present State Register 0-7bit */
 				cb_read_mem(0x08, &data);
 				printf("08 %02x\n", data);
 
