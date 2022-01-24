@@ -230,22 +230,30 @@ printf("detected device of class %u.%u\n", major, minor);
 				}
 				printf("\n");
 
+				cb_read_mem(0x08, &data);
+				printf("08 %02x\n", data);
+
+				if (data & 0x10) {
+					printf("16-bit card detected.\n");
 /* http://oswiki.osask.jp/?PCIC */
-				cb_read_mem(EXCAOFFSET + PCIC_IDENT, &data);
-				printf("ExCA PCIC_IDENT %02x\n", data);
+					cb_read_mem(EXCAOFFSET + PCIC_IDENT, &data);
+					printf("ExCA PCIC_IDENT %02x\n", data);
 
-				cb_write_mem(EXCAOFFSET + 0x06, 0x20);
-				cb_write_mem(EXCAOFFSET + 0x03, 0x40);
+					cb_write_mem(EXCAOFFSET + 0x06, 0x20);
+					cb_write_mem(EXCAOFFSET + 0x03, 0x40);
 
-				cb_read_mem(EXCAOFFSET + PCIC_IF_STATUS, &data);
-				printf("ExCA PCIC_IF_STATUS %02x\n", data);
-				if ((data & PCIC_IF_STATUS_CARDDETECT_MASK) ==
-				     PCIC_IF_STATUS_CARDDETECT_PRESENT) {
-					printf("Card inserted\n");
-					if (dump)
-						read_cis();
-					else
-						enable_pccard();
+					cb_read_mem(EXCAOFFSET + PCIC_IF_STATUS, &data);
+					printf("ExCA PCIC_IF_STATUS %02x\n", data);
+					if ((data & PCIC_IF_STATUS_CARDDETECT_MASK) ==
+					     PCIC_IF_STATUS_CARDDETECT_PRESENT) {
+						printf("Card inserted\n");
+						if (dump)
+							read_cis();
+						else
+							enable_pccard();
+					}
+				} else if(data & 0x20) {
+					printf("CardBus card detected.\n");
 				}
 			}
 		}
