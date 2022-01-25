@@ -66,7 +66,6 @@ void enable_pccard()
 
 	printf("Power On\n");
 	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
-//	    PCIC_PWRCTL_VPP1_VCC | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 	    PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 	cb_read_mem(EXCAOFFSET + 0x02, &data);
 	printf("ExCA 0x02  %02x\n", data);
@@ -115,7 +114,7 @@ void enable_pccard()
 	printf("\n");
 
 	cb_write_mem(EXCAOFFSET + PCIC_PWRCTL,
-	    PCIC_PWRCTL_VPP1_VCC | PCIC_PWRCTL_VPP2_VCC | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
+	    PCIC_PWRCTL_VPP1_VCC | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
 	cb_read_mem(EXCAOFFSET + 0x02, &data);
 	printf("ExCA 0x02  %02x\n", data);
 	/* start */
@@ -229,6 +228,8 @@ printf("detected device of class %u.%u\n", major, minor);
 					printf("%02x ", data);
 				}
 				printf("\n");
+				err = pci_read_config_dword(&pci, 0x80, &reg);
+				printf("System Control Register %x\n", reg);
 
 				/* Socket Present State Register 0-7bit */
 				cb_read_mem(0x08, &data);
