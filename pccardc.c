@@ -61,6 +61,7 @@ fn (function) is the least significant, bus is the most significant */
 void enable_pccard()
 {
 	int i, ioaddr, confaddr, confidx;
+	unsigned offset, memseg;
 	unsigned char data;
 	unsigned char scpinit[] = {0xfe, 0x80, 0x80, 0x00, 0x00, 0x01, 0xcc, 0x80, 0x03, 0x08, 0x01, 0x01, 0x22};
 
@@ -81,17 +82,20 @@ void enable_pccard()
 	/*
 	   set memory windows to 0xb1000 - 0xb1fff (4Kbyte)
 	*/
-	cb_write_mem(EXCAOFFSET + 0x10, 0xb1);
+	memseg = 0xb100;
+	offset = 0x8000 - (memseg >> 8);
+	printf("memory offset  %04x\n", offset);
+	cb_write_mem(EXCAOFFSET + 0x10, memseg >> 8);
 	cb_write_mem(EXCAOFFSET + 0x11, 0xc0);
-	cb_write_mem(EXCAOFFSET + 0x12, 0xb1);
+	cb_write_mem(EXCAOFFSET + 0x12, memseg >> 8);
 	cb_write_mem(EXCAOFFSET + 0x13, 0x00);
-	cb_write_mem(EXCAOFFSET + 0x14, 0x4f);
-	cb_write_mem(EXCAOFFSET + 0x15, 0x7f);
+	cb_write_mem(EXCAOFFSET + 0x14, offset & 0xff);
+	cb_write_mem(EXCAOFFSET + 0x15, offset >> 8);
 	cb_write_mem(EXCAOFFSET + 0x40, 0x00);
 	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, PCIC_ADDRWIN_ENABLE_MEM0);
 
 	confaddr = 0x400;
-	confidx = 1;
+	confidx = 0x1;
 	ioaddr = 0x330;
 	for (i = 0; i < 8; ++i) {
 		cb_read_mem(MEMWINOFFSET + confaddr + i, &data);
@@ -124,9 +128,10 @@ void enable_pccard()
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_STOP_LSB, (ioaddr & 0xff) + 0xc);
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_STOP_MSB, ioaddr >> 8);
 	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, PCIC_ADDRWIN_ENABLE_IO0 | 1);
-	cb_write_mem(EXCAOFFSET + PCIC_IOCTL, 0);
-	cb_write_mem(EXCAOFFSET + PCIC_IOCTL, 2);
+	cb_write_mem(EXCAOFFSET + PCIC_IOCTL, 4);
 //	cb_write_mem(EXCAOFFSET + 0x03, 0x20);
+	cb_read_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, &data);
+	printf("ExCA 0x%02x  %02x\n", PCIC_ADDRWIN_ENABLE, data);
 	for (i = 0; i < 0x0c; ++i) {
 		io_read_data(ioaddr + i, &data);
 		printf("%02x ", data);
