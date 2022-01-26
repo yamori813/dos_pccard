@@ -236,6 +236,8 @@ printf("detected device of class %u.%u\n", major, minor);
 				printf("\n");
 				err = pci_read_config_dword(&pci, 0x80, &reg);
 				printf("System Control Register %x\n", reg);
+				err = pci_read_config_byte(&pci, 0x92, &data);
+				printf("Device Control Register %x\n", data);
 
 				/* Socket Present State Register 0-7bit */
 				cb_read_mem(0x08, &data);
