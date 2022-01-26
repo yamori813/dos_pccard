@@ -74,9 +74,9 @@ void enable_pccard()
 	cb_read_mem(EXCAOFFSET + 0x01, &data);
 	printf("ExCA 0x01  %02x\n", data);
 	printf("Reset Card\n");
-	cb_write_mem(EXCAOFFSET + 0x03, 0x00);
+	cb_write_mem(EXCAOFFSET + PCIC_INTR, 0x00);
 	sleep(1);
-	cb_write_mem(EXCAOFFSET + 0x03, 0x40);
+	cb_write_mem(EXCAOFFSET + PCIC_INTR, 0x40);
 	sleep(1);
 
 	/*
@@ -127,9 +127,10 @@ void enable_pccard()
 	/* end */
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_STOP_LSB, (ioaddr & 0xff) + 0xc);
 	cb_write_mem(EXCAOFFSET + PCIC_IOADDR0_STOP_MSB, ioaddr >> 8);
-	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, PCIC_ADDRWIN_ENABLE_IO0 | 1);
-	cb_write_mem(EXCAOFFSET + PCIC_IOCTL, 4);
-//	cb_write_mem(EXCAOFFSET + 0x03, 0x20);
+	cb_write_mem(EXCAOFFSET + PCIC_IOCTL, PCIC_IOCTL_IO0_ZEROWAIT);
+	cb_write_mem(EXCAOFFSET + PCIC_INTR, PCIC_INTR_CARDTYPE_IO);
+	cb_read_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, &data);
+	cb_write_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, PCIC_ADDRWIN_ENABLE_IO0 | data);
 	cb_read_mem(EXCAOFFSET + PCIC_ADDRWIN_ENABLE, &data);
 	printf("ExCA 0x%02x  %02x\n", PCIC_ADDRWIN_ENABLE, data);
 	for (i = 0; i < 0x0c; ++i) {
