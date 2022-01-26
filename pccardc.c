@@ -163,11 +163,16 @@ int main( int argc, char *argv[] )
 	pci_t pci;
 	int err;
 	int dump;
+	int legacy;
 
 	dump = 0;
+	legacy = 0;
 	if (argc > 1) {
 		if(strcmp("/D", argv[1]) == 0) {
 			dump = 1;
+		}
+		if(strcmp("/L", argv[1]) == 0) {
+			legacy = 1;
 		}
 	}
 /* check for PCI BIOS */
@@ -221,6 +226,12 @@ printf("detected device of class %u.%u\n", major, minor);
 				   set CardBus Socket/ExCA Base Address
 				   0xb0000 - 0xb0fff (4Kbyte)
 				*/
+				if (legacy) {
+					err = pci_write_config_dword(&pci, 0x44, 0x3e0);
+					err = pci_read_config_dword(&pci, 0x04, &reg);
+					reg |= 7;
+					err = pci_write_config_dword(&pci, 0x04, reg);
+				} else {
 				err = pci_write_config_dword(&pci, 0x10,
 				    0xb0000);
 				err = pci_write_config_dword(&pci, 0x44,
@@ -263,6 +274,7 @@ printf("detected device of class %u.%u\n", major, minor);
 					}
 				} else if(data & 0x20) {
 					printf("CardBus card detected.\n");
+				}
 				}
 			}
 		}
